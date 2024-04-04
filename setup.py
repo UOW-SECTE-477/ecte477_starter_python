@@ -26,7 +26,8 @@ setup(
         'console_scripts': [
 		'command_server = ecte477_starter_python.command_server_node:main',
 		'wall_follower = ecte477_starter_python.wall_follower_node:main',
-        'maze_explorer = ecte477_starter_python.maze_explorer:main'
+        'maze_explorer = ecte477_starter_python.maze_explorer:main',
+        'maze_explorer3 = ecte477_starter_python.maze_explorer3:main'
         ],
     },
 )
