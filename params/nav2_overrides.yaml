@@ -1,0 +1,15 @@
+behavior_server:
+  ros__parameters:
+    enable_stamped_cmd_vel: true
+
+velocity_smoother:
+  ros__parameters:
+    enable_stamped_cmd_vel: true  # Must match downstream nodes
+
+collision_monitor:
+  ros__parameters:
+    enable_stamped_cmd_vel: true
+
+controller_server:
+  ros__parameters:
+    enable_stamped_cmd_vel: true   
