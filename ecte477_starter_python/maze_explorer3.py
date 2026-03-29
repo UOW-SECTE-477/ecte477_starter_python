@@ -34,14 +34,19 @@ class TurtlebotExplore(Node):
         self.setInitPose = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 1)
 
         qos_policy = QoSProfile(durability=QoSDurabilityPolicy.VOLATILE, reliability=QoSReliabilityPolicy.BEST_EFFORT, history=QoSHistoryPolicy.KEEP_LAST, depth=1)
-        
+
+        self.tf_buffer = Buffer()
+        self.transform_listener = TransformListener(self.tf_buffer, self)
+        self.get_logger().info("Waiting for initial transform to be available...")
+        while not self.tf_buffer.can_transform(BASE_FRAME, 'odom', rclpy.time.Time(),timeout=rclpy.duration.Duration(seconds=1.0)):
+            rclpy.spin_once(self, timeout_sec=0.1)
+
         self.pub_stack_points = self.create_publisher(MarkerArray, '/stack_points', 5)
         self.startSub = self.create_subscription(String, '/start_explore', self.start_callback, 5)
         self.laserSub = self.create_subscription(LaserScan, '/scan', self.lidar_callback, qos_policy)
         self.odomSub = self.create_subscription(Odometry, '/odom', self.odom_callback, 5)
         self.move_action = ActionClient(self, NavigateToPose, '/navigate_to_pose')
-        self.tf_buffer = Buffer()
-        self.transform_listener = TransformListener(self.tf_buffer, self)
+
         self.goal = None
         self.startSub
         self.laserSub
@@ -73,7 +78,7 @@ class TurtlebotExplore(Node):
                 self.odom_done = False
                 while not self.laser_done or not self.odom_done:
                     self.get_logger().info('Getting sensor update')
-                    rclpy.spin_once(self, timeout_sec=1.0)  # wait for lidar and odom callbacks
+                    rclpy.spin_once(self, timeout_sec=5.0)  # wait for lidar and odom callbacks
                 if (self.next_move[0][1] == 270):
                     self.set_goal(self.next_move[0])
                 if (self.next_move[1][1] == 90):
@@ -208,7 +213,7 @@ class TurtlebotExplore(Node):
 
     def lidar_callback(self, msg):
         transformation = []
-        while transformation == []:
+        while len(transformation) == 0:
             transformation = self.get_transform(msg)
         
         angle = msg.angle_min
@@ -303,7 +308,7 @@ class TurtlebotExplore(Node):
             quaternion = new_transform.transform.rotation
             return trans.pq_to_se3(position, quaternion)
         except Exception as e:
-            self.get_logger.info()('Unable to get transformation! %r' % (e))   
+            self.get_logger().info('Unable to get transformation! %r' % (e))
             return []
 
         
